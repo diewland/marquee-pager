@@ -73,10 +73,13 @@ class MarqueePager constructor(private val pager: ViewPager2) {
 
     // animation
     private fun playAnimation(durationPerPage: Long) {
-        if (pager.currentItem > 0) // go to first page
+        val total = getItemCount()
+        if (total <= 1)
+            l("empty or single page, do nothing")
+        else if (pager.currentItem > 0) // go to first page
             goTo(pager, 0, durationPerPage)
         else // go to last page
-            goTo(pager, getItemCount()-1, durationPerPage)
+            goTo(pager, total-1, durationPerPage)
     }
     // https://stackoverflow.com/a/59235979/466693
     private fun goTo(pager: ViewPager2, item: Int, durationPerPage: Long) {

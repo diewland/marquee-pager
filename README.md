@@ -22,7 +22,7 @@ git submodule update --remote --recursive
 
 #### Demo Project
 
-https://github.com/diewland/ViewPager2SlidingDemo
+https://github.com/diewland/ViewPager2SlidingDemo/tree/auto-scroll
 
 ---
 

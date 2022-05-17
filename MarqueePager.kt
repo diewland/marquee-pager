@@ -36,7 +36,7 @@ class MarqueePager constructor(private val pager: ViewPager2) {
         timer = Timer()
         timer!!.schedule(object: TimerTask() {
             override fun run() {
-                handler?.also { it.post { playAnimation(dpp) } }
+                handler?.post { playAnimation(dpp) }
             }
         }, delay, period)
         // info

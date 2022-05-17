@@ -21,13 +21,14 @@ class MarqueePager constructor(private val pager: ViewPager2) {
     // setup job
     private var timer: Timer? = null
     private var handler: Handler? = null
+    private var animator: ValueAnimator? = null
 
     // main functions
     fun play(delay: Long=jobDelay,
              dpp: Long=durationPerPage,
-             lpd: Long=lastPageDelay): Boolean {
+             lpd: Long=lastPageDelay) {
         // make sure no marquee running
-        val flag = stop()
+        stop()
         // calc job period
         val pageSize = getItemCount()
         val period = (pageSize * dpp) + lpd
@@ -40,13 +41,14 @@ class MarqueePager constructor(private val pager: ViewPager2) {
             }
         }, delay, period)
         // info
-        l("<start> flag: $flag, page_size: $pageSize, job_period: $period")
-        // return previous marquee flag
-        return flag
+        l("<start> page_size: $pageSize, job_period: $period")
     }
-    fun stop(): Boolean {
-        // force stop fake drag
-        val flag = pager.endFakeDrag()
+    fun stop() {
+        // stop animation
+        animator?.also {
+            it.removeAllListeners()
+            it.cancel()
+        }
         // clean up
         timer?.also {
             it.cancel()
@@ -59,9 +61,7 @@ class MarqueePager constructor(private val pager: ViewPager2) {
         timer = null
         handler = null
         // info
-        l("<stop> flag: $flag")
-        // return stop fake drag result
-        return flag
+        l("<stop>")
     }
 
     // pager util
@@ -96,24 +96,26 @@ class MarqueePager constructor(private val pager: ViewPager2) {
         val currentItem = pager.currentItem
         val duration = getItemCount() * dpp
 
-        val pxToDrag: Int = pagePxWidth * (item - currentItem)
-        val animator = ValueAnimator.ofInt(0, pxToDrag)
         var previousValue = 0
-        animator.addUpdateListener { valueAnimator ->
-            val currentValue = valueAnimator.animatedValue as Int
-            val currentPxToDrag = (currentValue - previousValue).toFloat()
-            pager.fakeDragBy(-currentPxToDrag)
-            previousValue = currentValue
+        val pxToDrag: Int = pagePxWidth * (item - currentItem)
+        animator = ValueAnimator.ofInt(0, pxToDrag)
+        animator?.also {
+            it.addUpdateListener { valueAnimator ->
+                val currentValue = valueAnimator.animatedValue as Int
+                val currentPxToDrag = (currentValue - previousValue).toFloat()
+                pager.fakeDragBy(-currentPxToDrag)
+                previousValue = currentValue
+            }
+            it.addListener(object : Animator.AnimatorListener {
+                override fun onAnimationStart(animation: Animator?) { pager.beginFakeDrag() }
+                override fun onAnimationEnd(animation: Animator?) { pager.endFakeDrag() }
+                override fun onAnimationCancel(animation: Animator?) { /* Ignored */ }
+                override fun onAnimationRepeat(animation: Animator?) { /* Ignored */ }
+            })
+            it.interpolator = interpolator
+            it.duration = duration
+            it.start()
         }
-        animator.addListener(object : Animator.AnimatorListener {
-            override fun onAnimationStart(animation: Animator?) { pager.beginFakeDrag() }
-            override fun onAnimationEnd(animation: Animator?) { pager.endFakeDrag() }
-            override fun onAnimationCancel(animation: Animator?) { /* Ignored */ }
-            override fun onAnimationRepeat(animation: Animator?) { /* Ignored */ }
-        })
-        animator.interpolator = interpolator
-        animator.duration = duration
-        animator.start()
     }
 
 }

@@ -16,36 +16,32 @@ class MarqueePager constructor(private val pager: ViewPager2) {
     // default config
     private val jobDelay = 1_000L
     private val jobPeriod = 30_000L
-    private val pagePeriod = 5_000L
+    private val lastPageDelay = 1_000L
 
     // setup job
-    private var isRunning = false
     private var timer: Timer? = null
     private var handler: Handler? = null
 
     // main functions
     fun play(delay: Long=jobDelay,
              period: Long=jobPeriod,
-             aniPeriod: Long=pagePeriod) {
-        if (isRunning || pager.isFakeDragging) {
-            l("job is running..")
-            return
-        }
-        isRunning = true
+             pageDelay: Long=lastPageDelay): Boolean {
+        // make sure no marquee running
+        val flag = stop()
+        // make schedule
         handler = Handler()
         timer = Timer()
         timer!!.schedule(object: TimerTask() {
             override fun run() {
-                handler?.also { it.post { playAnimation(aniPeriod) } }
+                handler?.also { it.post { playAnimation(period, pageDelay) } }
             }
         }, delay, period)
+        // return previous marquee flag
+        return flag
     }
-    fun stop() {
-        if (!isRunning || !pager.isFakeDragging) {
-            l("job already stopped")
-            return
-        }
-        isRunning = false
+    fun stop(): Boolean {
+        // force stop fake drag
+        val flag = pager.endFakeDrag()
         // clean up
         timer?.also {
             it.cancel()
@@ -57,6 +53,8 @@ class MarqueePager constructor(private val pager: ViewPager2) {
         // set null
         timer = null
         handler = null
+        // return stop fake drag result
+        return flag
     }
 
     // pager util
@@ -72,24 +70,28 @@ class MarqueePager constructor(private val pager: ViewPager2) {
     }
 
     // animation
-    private fun playAnimation(durationPerPage: Long) {
+    private fun playAnimation(jobPeriod: Long, lastPageDelay: Long) {
         val total = getItemCount()
         if (total <= 1)
             l("empty or single page, do nothing")
         else if (pager.currentItem > 0) // go to first page
-            goTo(pager, 0, durationPerPage)
+            goTo(pager, 0, jobPeriod, lastPageDelay)
         else // go to last page
-            goTo(pager, total-1, durationPerPage)
+            goTo(pager, total-1, jobPeriod, lastPageDelay)
     }
     // https://stackoverflow.com/a/59235979/466693
-    private fun goTo(pager: ViewPager2, item: Int, durationPerPage: Long) {
+    private fun goTo(pager: ViewPager2, item: Int, jobPeriod: Long, lastPageDelay: Long) {
         l("go to item: $item")
         if (!validateItem(item)) return
+
+        // calc duration per page
+        val dpp = (jobPeriod - lastPageDelay) / getItemCount()
+        l("duration per page: $dpp")
 
         // get current pager state
         val pagePxWidth = pager.width
         val currentItem = pager.currentItem
-        val duration = getItemCount() * durationPerPage
+        val duration = getItemCount() * dpp
 
         val pxToDrag: Int = pagePxWidth * (item - currentItem)
         val animator = ValueAnimator.ofInt(0, pxToDrag)

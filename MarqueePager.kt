@@ -2,6 +2,7 @@ package com.diewland.pager
 
 import android.animation.Animator
 import android.animation.ValueAnimator
+import android.os.Build
 import android.os.Handler
 import android.util.Log
 import androidx.viewpager2.widget.ViewPager2
@@ -35,7 +36,12 @@ class MarqueePager constructor(private val pager: ViewPager2) {
         timer = Timer()
         timer!!.schedule(object: TimerTask() {
             override fun run() {
-                handler?.post { playAnimation(dpp) }
+                handler?.post {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
+                        playAnimation(dpp)
+                    else // old android
+                        playAnimation(dpp * 2)
+                }
             }
         }, delay, period)
         // info

@@ -4,14 +4,12 @@ import android.animation.Animator
 import android.animation.ValueAnimator
 import android.os.Handler
 import android.util.Log
-import android.view.animation.AccelerateDecelerateInterpolator
 import androidx.viewpager2.widget.ViewPager2
 import java.util.*
 
 class MarqueePager constructor(private val pager: ViewPager2) {
 
     private fun l(msg: String) { Log.d("MARQUEE", msg) }
-    private val interpolator = AccelerateDecelerateInterpolator()
 
     // default config
     private val jobDelay = 1_000L
@@ -112,7 +110,7 @@ class MarqueePager constructor(private val pager: ViewPager2) {
                 override fun onAnimationCancel(animation: Animator?) { /* Ignored */ }
                 override fun onAnimationRepeat(animation: Animator?) { /* Ignored */ }
             })
-            it.interpolator = interpolator
+            it.interpolator = null // linear
             it.duration = duration
             it.start()
         }

@@ -39,8 +39,10 @@ class MarqueePager constructor(private val pager: ViewPager2) {
                 handler?.post {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
                         playAnimation(dpp)
-                    else // old android
+                    else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
                         playAnimation(dpp * 2)
+                    else // old android
+                        l("not support lower than lollipop android")
                 }
             }
         }, delay, period)
